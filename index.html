@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cálculo de días</title>
+<meta name="description" content="Calculadora de días entre fechas y control de plazos.">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Días">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#667085;--bd:#d9dde3;--ac:#2563eb;--acx:#fff;--ok:#eef4ff;--good:#0f7a3d;--bad:#c0262d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--card:#1d2026;--tx:#e8eaed;--mut:#98a2b3;--bd:#33383f;--ac:#5b8def;--acx:#0b1220;--ok:#1f2a40;--good:#4ade80;--bad:#f87171}}
+:root[data-theme="dark"]{--bg:#14161a;--card:#1d2026;--tx:#e8eaed;--mut:#98a2b3;--bd:#33383f;--ac:#5b8def;--acx:#0b1220;--ok:#1f2a40;--good:#4ade80;--bad:#f87171}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.35rem;margin:0 0 14px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px}
+label{display:block;font-size:.85rem;color:var(--mut);margin-bottom:4px}
+input[type=date],input[type=number],select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:flex;gap:10px;align-items:end;margin-bottom:10px}
+.row>div{flex:1}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--tx);margin-top:6px}
+.chk input{width:18px;height:18px}
+.big{font-size:2.6rem;font-weight:700;line-height:1.1}
+.sub{color:var(--mut);margin-top:4px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.grid div{background:var(--ok);border-radius:10px;padding:10px}
+.grid b{display:block;font-size:1.1rem}
+.grid span{font-size:.78rem;color:var(--mut)}
+.btn{padding:9px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;cursor:pointer}
+.btn.p{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+.x{width:40px;flex:none;padding:9px 0}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{color:var(--mut);font-weight:500;font-size:.8rem}
+td.n{text-align:right}
+.hide{display:none}
+.rest{border-radius:12px;padding:14px;margin-bottom:14px;background:var(--ok)}
+.rest .big{font-size:2.2rem}
+.rest.good .big{color:var(--good)}
+.rest.bad .big{color:var(--bad)}
+.sep{border:0;border-top:1px solid var(--bd);margin:14px 0}
+#inst{display:none;width:100%;margin-bottom:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Días entre fechas</h1>
+<button class="btn p" id="inst">⬇ Instalar app</button>
+<div class="tabs">
+  <button id="t2" class="on">2 fechas</button>
+  <button id="tN">Varias fechas</button>
+</div>
+
+<section id="p2">
+  <div class="card">
+    <div class="row">
+      <div><label for="d1">Desde</label><input type="date" id="d1"></div>
+      <div><label for="d2">Hasta</label><input type="date" id="d2"></div>
+    </div>
+    <div class="acts"><button class="btn" id="hoy1">Desde hoy</button><button class="btn" id="hoy2">Hasta hoy</button><button class="btn" id="swap">Invertir</button></div>
+    <label class="chk"><input type="checkbox" id="inc2"> Contar ambos extremos (+1 día)</label>
+  </div>
+  <div class="card" id="r2"><div class="sub">Elegí dos fechas.</div></div>
+</section>
+
+<section id="pN" class="hide">
+  <div class="card">
+    <div class="row">
+      <div><label for="plazo">Plazo total</label>
+        <select id="plazo">
+          <option value="90">90 días</option>
+          <option value="60">60 días</option>
+          <option value="otro">Otro…</option>
+        </select>
+      </div>
+      <div id="otroBox" class="hide"><label for="otro">Cantidad de días</label><input type="number" id="otro" min="1" step="1" inputmode="numeric" placeholder="Ej: 180"></div>
+    </div>
+    <hr class="sep">
+    <div class="sub" style="margin:0 0 10px">Cada par suma sus días: fecha 1 y 2, fecha 3 y 4, y así sucesivamente.</div>
+    <div id="list"></div>
+    <div class="acts">
+      <button class="btn p" id="add">+ Agregar par de fechas</button>
+      <button class="btn" id="clr">Limpiar</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="incN"> Contar ambos extremos (+1 día en cada par)</label>
+  </div>
+  <div class="card" id="rN"><div class="sub">Completá al menos un par de fechas.</div></div>
+</section>
+</main>
+
+<script>
+(function(){
+var DAY=864e5, DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+var $=function(i){return document.getElementById(i)};
+function parse(v){if(!v)return null;var p=v.split("-").map(Number);return Date.UTC(p[0],p[1]-1,p[2])}
+function fmt(t){var d=new Date(t);return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+d.getUTCFullYear()}
+function iso(t){var d=new Date(t);return d.getUTCFullYear()+"-"+String(d.getUTCMonth()+1).padStart(2,"0")+"-"+String(d.getUTCDate()).padStart(2,"0")}
+function today(){var n=new Date();return Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())}
+function diff(a,b){return Math.round((b-a)/DAY)}
+function ymd(a,b){
+  var A=new Date(a),B=new Date(b);
+  var y=B.getUTCFullYear()-A.getUTCFullYear(),m=B.getUTCMonth()-A.getUTCMonth(),d=B.getUTCDate()-A.getUTCDate();
+  if(d<0){m--;d+=new Date(Date.UTC(B.getUTCFullYear(),B.getUTCMonth(),0)).getUTCDate()}
+  if(m<0){y--;m+=12}
+  return [y,m,d];
+}
+function biz(a,b){var c=0;for(var t=a;t<b;t+=DAY){var w=new Date(t).getUTCDay();if(w!==0&&w!==6)c++}return c}
+function pl(n,s,p){return n+" "+(Math.abs(n)===1?s:p)}
+function nf(n){return n.toLocaleString("es-AR")}
+
+/* --- 2 fechas --- */
+function calc2(){
+  var a=parse($("d1").value),b=parse($("d2").value),r=$("r2");
+  if(a==null||b==null){r.innerHTML='<div class="sub">Elegí dos fechas.</div>';return}
+  var inc=$("inc2").checked?1:0, neg=b<a, lo=neg?b:a, hi=neg?a:b;
+  var d=diff(lo,hi), tot=d+inc, s=ymd(lo,hi), w=Math.floor(tot/7);
+  r.innerHTML='<div class="big">'+nf(neg?-tot:tot)+' <span style="font-size:1.1rem;font-weight:500">'+(Math.abs(tot)===1?"día":"días")+'</span></div>'
+   +'<div class="sub">'+DIAS[new Date(a).getUTCDay()]+" "+fmt(a)+" → "+DIAS[new Date(b).getUTCDay()]+" "+fmt(b)+(neg?" (la fecha final es anterior)":"")+'</div>'
+   +'<div class="grid">'
+   +'<div><b>'+pl(s[0],"año","años")+", "+pl(s[1],"mes","meses")+", "+pl(s[2],"día","días")+'</b><span>Desglose calendario</span></div>'
+   +'<div><b>'+pl(w,"semana","semanas")+" y "+pl(tot%7,"día","días")+'</b><span>En semanas</span></div>'
+   +'<div><b>'+nf(biz(lo,hi)+(inc&&[0,6].indexOf(new Date(hi).getUTCDay())<0?1:0))+'</b><span>Días hábiles (lun a vie, sin feriados)</span></div>'
+   +'<div><b>'+nf(Math.round(tot*24))+' h</b><span>Horas</span></div>'
+   +'</div>';
+}
+["d1","d2","inc2"].forEach(function(i){$(i).addEventListener("input",calc2)});
+$("hoy1").onclick=function(){$("d1").value=iso(today());calc2()};
+$("hoy2").onclick=function(){$("d2").value=iso(today());calc2()};
+$("swap").onclick=function(){var t=$("d1").value;$("d1").value=$("d2").value;$("d2").value=t;calc2()};
+
+/* --- varias fechas --- */
+var vals=["","","",""]; /* siempre cantidad par: [desde1,hasta1,desde2,hasta2,...] */
+function renderList(){
+  var h="";
+  for(var i=0;i<vals.length;i+=2){
+    h+='<div class="row"><div><label>Par '+(i/2+1)+' · Desde</label><input type="date" data-i="'+i+'" value="'+vals[i]+'"></div>'
+      +'<div><label>Hasta</label><input type="date" data-i="'+(i+1)+'" value="'+vals[i+1]+'"></div>'
+      +'<button class="btn x" data-x="'+i+'" aria-label="Quitar par">✕</button></div>';
+  }
+  $("list").innerHTML=h;
+}
+$("list").addEventListener("input",function(e){var i=e.target.getAttribute("data-i");if(i!==null){vals[+i]=e.target.value;calcN()}});
+$("list").addEventListener("click",function(e){
+  var x=e.target.getAttribute("data-x");
+  if(x!==null){vals.splice(+x,2);if(vals.length<2)vals.push("","");renderList();calcN()}
+});
+$("add").onclick=function(){vals.push("","");renderList();var ins=$("list").querySelectorAll("input");ins[ins.length-2].focus()};
+$("clr").onclick=function(){vals=["","","",""];renderList();calcN()};
+$("incN").addEventListener("input",calcN);
+
+/* plazo: 90 / 60 / otro */
+function getPlazo(){
+  var v=$("plazo").value;
+  if(v!=="otro")return +v;
+  var n=parseInt($("otro").value,10);
+  return n>0?n:null;
+}
+$("plazo").addEventListener("change",function(){
+  var o=$("plazo").value==="otro";
+  $("otroBox").classList.toggle("hide",!o);
+  if(o)$("otro").focus();
+  calcN();
+});
+$("otro").addEventListener("input",calcN);
+
+function restanteHTML(tot){
+  var P=getPlazo();
+  if(P==null)return '<div class="rest"><div class="sub" style="margin:0">Ingresá la cantidad de días del plazo.</div></div>';
+  var q=P-tot;
+  if(q>=0){
+    return '<div class="rest good"><div class="big">'+nf(q)+' <span style="font-size:1.1rem;font-weight:500">'+(q===1?"día":"días")+'</span></div>'
+      +'<div class="sub">'+(q===1?"Queda":"Quedan")+' de un plazo de '+nf(P)+' días · usados '+nf(tot)+'</div></div>';
+  }
+  return '<div class="rest bad"><div class="big">'+nf(-q)+' <span style="font-size:1.1rem;font-weight:500">'+(-q===1?"día":"días")+' de exceso</span></div>'
+    +'<div class="sub">Se superó el plazo de '+nf(P)+' días · usados '+nf(tot)+'</div></div>';
+}
+
+function calcN(){
+  var r=$("rN"), inc=$("incN").checked?1:0;
+  var rows="",tot=0,n=0,hab=0,rev=false;
+  for(var i=0;i<vals.length;i+=2){
+    var a=parse(vals[i]),b=parse(vals[i+1]),k=i/2+1;
+    if(a==null||b==null){
+      rows+="<tr><td>"+k+"</td><td>"+(a==null?"—":fmt(a))+"</td><td>"+(b==null?"—":fmt(b))+'</td><td class="n" style="color:var(--mut)">incompleto</td></tr>';
+      continue;
+    }
+    var lo=Math.min(a,b),hi=Math.max(a,b),d=diff(lo,hi)+inc;
+    if(b<a)rev=true;
+    tot+=d;n++;
+    hab+=biz(lo,hi)+(inc&&[0,6].indexOf(new Date(hi).getUTCDay())<0?1:0);
+    rows+="<tr><td>"+k+"</td><td>"+fmt(a)+"</td><td>"+fmt(b)+(b<a?" ↺":"")+'</td><td class="n">'+nf(d)+"</td></tr>";
+  }
+  if(!n){r.innerHTML='<div class="sub">Completá al menos un par de fechas.</div>';return}
+  r.innerHTML=restanteHTML(tot)
+   +'<div style="font-size:1.6rem;font-weight:700">'+nf(tot)+' <span style="font-size:1rem;font-weight:500">'+(tot===1?"día usado":"días usados")+'</span></div>'
+   +'<div class="sub">Suma de '+pl(n,"par","pares")+'</div>'
+   +'<div class="tw" style="margin-top:12px"><table><thead><tr><th>Par</th><th>Desde</th><th>Hasta</th><th class="n">Días</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+   +(rev?'<div class="sub">↺ La fecha final es anterior a la inicial; el par se cuenta igual.</div>':'');
+}
+
+/* --- pestañas --- */
+function tab(n){
+  $("p2").classList.toggle("hide",n);$("pN").classList.toggle("hide",!n);
+  $("t2").classList.toggle("on",!n);$("tN").classList.toggle("on",n);
+}
+$("t2").onclick=function(){tab(false)};
+$("tN").onclick=function(){tab(true)};
+renderList();calc2();calcN();
+
+/* --- app instalable (PWA) --- */
+if("serviceWorker" in navigator && location.protocol!=="file:"){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+var deferred=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferred=e;$("inst").style.display="block"});
+$("inst").onclick=function(){if(!deferred)return;deferred.prompt();deferred.userChoice.finally(function(){deferred=null;$("inst").style.display="none"})};
+window.addEventListener("appinstalled",function(){$("inst").style.display="none"});
+})();
+</script>
+</body>
+</html>
