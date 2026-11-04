@@ -65,10 +65,6 @@ td.n,th.n{text-align:right;font-weight:600}
 .sep{border:0;border-top:1px solid var(--line);margin:14px -14px}
 .foot{font-size:12px;color:var(--mut);margin-top:18px;line-height:1.5}
 #inst{display:none}
-.pdfi{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);margin-bottom:12px}
-.pdfi .ic{flex:none;width:40px;height:48px;border-radius:8px;background:var(--errbg);color:var(--err);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
-.pdfi .nm{font-weight:600;word-break:break-word}
-.msg{font-size:13px;margin-top:10px}.msg.ok{color:var(--ent)}.msg.er{color:var(--err)}
 </style>
 </head>
 <body>
@@ -78,7 +74,6 @@ td.n,th.n{text-align:right;font-weight:600}
 <div class="chips">
   <button id="t2" class="chip on">2 fechas</button>
   <button id="tN" class="chip">Varias fechas</button>
-  <button id="tV" class="chip">Listado de visas</button>
 </div>
 
 <section id="p2">
@@ -123,22 +118,6 @@ td.n,th.n{text-align:right;font-weight:600}
   </div>
   <div class="grp">Resultado</div>
   <div class="card"><div class="in" id="rN"><div class="sub">Completá al menos un par de fechas.</div></div></div>
-</section>
-<section id="pV" class="hide">
-  <div class="card">
-    <h2><span>Listado de visas</span><span class="rol">PDF</span></h2>
-    <div class="in">
-      <div id="vInfo"><div class="sub" style="margin:0 0 12px">Todavía no subiste ningún listado.</div></div>
-      <input type="file" id="vFile" accept="application/pdf,.pdf" class="hide">
-      <div class="acts">
-        <button class="btn p" id="vUp">⬆ Subir PDF actualizado</button>
-        <button class="btn hide" id="vVer">Ver listado</button>
-        <button class="btn hide" id="vDel">Quitar</button>
-      </div>
-      <div id="vMsg" class="msg"></div>
-      <div class="sub" style="margin-top:12px">El PDF se guarda en este dispositivo y queda disponible sin internet. Al subir uno nuevo reemplaza al anterior.</div>
-    </div>
-  </div>
 </section>
 <div class="foot">Los días hábiles cuentan de lunes a viernes, sin feriados. Funciona sin internet una vez instalada.</div>
 </main>
@@ -254,58 +233,12 @@ function calcN(){
 }
 
 /* --- pestañas --- */
-function tab(k){
-  ["2","N","V"].forEach(function(x){$("p"+x).classList.toggle("hide",x!==k);$("t"+x).classList.toggle("on",x===k)});
+function tab(n){
+  $("p2").classList.toggle("hide",n);$("pN").classList.toggle("hide",!n);
+  $("t2").classList.toggle("on",!n);$("tN").classList.toggle("on",n);
 }
-$("t2").onclick=function(){tab("2")};
-$("tN").onclick=function(){tab("N")};
-$("tV").onclick=function(){tab("V")};
-
-/* --- listado de visas (PDF guardado en el dispositivo, IndexedDB) --- */
-function vdb(){return new Promise(function(ok,ko){
-  if(!window.indexedDB)return ko(new Error("sin IndexedDB"));
-  var q=indexedDB.open("calculo-dias",1);
-  q.onupgradeneeded=function(){q.result.createObjectStore("archivos")};
-  q.onsuccess=function(){ok(q.result)};q.onerror=function(){ko(q.error)};
-})}
-function vop(mode,fn){return vdb().then(function(db){return new Promise(function(ok,ko){
-  var t=db.transaction("archivos",mode),st=t.objectStore("archivos"),q=fn(st);
-  t.oncomplete=function(){ok(q&&q.result)};t.onerror=function(){ko(t.error)};t.onabort=function(){ko(t.error)};
-})})}
-function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function kb(n){return n<1048576?Math.max(1,Math.round(n/1024))+" KB":(n/1048576).toFixed(1).replace(".",",")+" MB"}
-var vRec=null,vUrl=null;
-function vMsg(t,c){var m=$("vMsg");m.textContent=t||"";m.className="msg"+(c?" "+c:"")}
-function vShow(){
-  if(vUrl){URL.revokeObjectURL(vUrl);vUrl=null}
-  var has=!!vRec;
-  $("vVer").classList.toggle("hide",!has);$("vDel").classList.toggle("hide",!has);
-  if(!has){$("vInfo").innerHTML='<div class="sub" style="margin:0 0 12px">Todavía no subiste ningún listado.</div>';return}
-  var d=new Date(vRec.fecha);
-  $("vInfo").innerHTML='<div class="pdfi"><div class="ic">PDF</div><div><div class="nm">'+esc(vRec.nombre)+'</div>'
-    +'<div class="sub" style="margin:2px 0 0">Actualizado el '+fmt(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()))+' a las '+String(d.getHours()).padStart(2,"0")+':'+String(d.getMinutes()).padStart(2,"0")+' · '+kb(vRec.blob.size)+'</div></div></div>';
-}
-vop("readonly",function(st){return st.get("visas")}).then(function(r){vRec=r||null;vShow()}).catch(function(){});
-$("vUp").onclick=function(){$("vFile").click()};
-$("vFile").addEventListener("change",function(){
-  var f=this.files&&this.files[0];this.value="";
-  if(!f)return;
-  if(!/\.pdf$/i.test(f.name)&&f.type!=="application/pdf"){vMsg("El archivo tiene que ser un PDF.","er");return}
-  var rec={nombre:f.name,fecha:Date.now(),blob:new Blob([f],{type:"application/pdf"})};
-  vop("readwrite",function(st){return st.put(rec,"visas")})
-    .then(function(){vRec=rec;vShow();vMsg("Listado actualizado.","ok")})
-    .catch(function(){vMsg("No se pudo guardar el PDF en este dispositivo.","er")});
-});
-$("vVer").onclick=function(){
-  if(!vRec)return;
-  if(!vUrl)vUrl=URL.createObjectURL(vRec.blob);
-  var w=window.open(vUrl,"_blank");
-  if(!w){var a=document.createElement("a");a.href=vUrl;a.download=vRec.nombre;document.body.appendChild(a);a.click();a.remove()}
-};
-$("vDel").onclick=function(){
-  if(!confirm("¿Quitar el listado de visas guardado?"))return;
-  vop("readwrite",function(st){return st.delete("visas")}).then(function(){vRec=null;vShow();vMsg("Listado quitado.")}).catch(function(){});
-};
+$("t2").onclick=function(){tab(false)};
+$("tN").onclick=function(){tab(true)};
 renderList();calc2();calcN();
 
 /* --- app instalable (PWA) --- */
